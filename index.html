@@ -219,6 +219,98 @@
             color: #fff;
         }
 
+
+        /* Controls Panel */
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 11px;
+            min-width: 280px;
+            max-height: 85vh;
+            overflow-y: auto;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: none;
+        }
+
+        #controls.visible {
+            display: block;
+        }
+
+        #controls label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+            font-size: 10px;
+        }
+
+        #controls input[type="range"] {
+            width: 140px;
+            margin-left: 10px;
+        }
+
+        #controls h3 {
+            font-size: 11px;
+            margin: 16px 0 8px 0;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 4px;
+        }
+
+        #controls button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        #controls button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Interactions Guide */
+        #interactions {
+            position: absolute;
+            left: 24px;
+            top: 24px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 9px;
+            line-height: 1.8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        #interactions h4 {
+            font-size: 10px;
+            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #interactions kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            margin-right: 6px;
+        }
+
         /* Theme dots */
         #themes {
             position: absolute;
@@ -282,6 +374,55 @@
         <div>FPS: <span id="fps">60</span></div>
         <div>Torn: <span id="torn">0</span></div>
     </div>
+
+    <div id="interactions">
+        <h4>INTERAÇÕES</h4>
+        <div><kbd>Click + Drag</kbd> Tensionar/Cortar</div>
+        <div><kbd>Shift + Drag</kbd> Modo Tesoura ✂️</div>
+        <div><kbd>Double Click</kbd> Corte Vertical</div>
+        <div><kbd>R</kbd> Rajada de Vento</div>
+        <div><kbd>C</kbd> Corte Circular</div>
+        <div><kbd>D</kbd> Controles</div>
+    </div>
+
+    <div id="controls">
+        <h3>Physics</h3>
+        <label>Iterations: <span id="val-iter">8</span><input type="range" id="iterations" min="4" max="16"
+                value="8"></label>
+        <label>Gravity: <span id="val-grav">0.2</span><input type="range" id="gravity" min="0.0" max="0.8" step="0.05"
+                value="0.2"></label>
+        <label>Friction: <span id="val-fric">0.98</span><input type="range" id="friction" min="0.9" max="0.99"
+                step="0.01" value="0.98"></label>
+
+        <h3>Material</h3>
+        <label>Tear Threshold: <span id="val-tear">3.0</span><input type="range" id="tearThreshold" min="1.5" max="5.0"
+                step="0.1" value="3.0"></label>
+        <label>Stiffness: <span id="val-stiff">1.2</span><input type="range" id="stiffness" min="0.5" max="2.5"
+                step="0.1" value="1.2"></label>
+        <label>Mesh Density: <span id="val-density">35</span><input type="range" id="meshDensity" min="20" max="60"
+                step="5" value="35"></label>
+
+        <h3>Wind</h3>
+        <label>Force: <span id="val-wind">0.08</span><input type="range" id="windForce" min="0" max="0.5" step="0.02"
+                value="0.08"></label>
+        <label>Turbulence: <span id="val-turb">0.15</span><input type="range" id="turbulence" min="0" max="0.4"
+                step="0.05" value="0.15"></label>
+
+        <h3>Visual</h3>
+        <label>Line Width: <span id="val-width">0.8</span><input type="range" id="lineWidth" min="0.3" max="2.0"
+                step="0.1" value="0.8"></label>
+        <label>Line Opacity: <span id="val-opacity">0.9</span><input type="range" id="lineOpacity" min="0.3" max="1.0"
+                step="0.05" value="0.9"></label>
+        <label>Tension Colors: <span id="val-tension">On</span><input type="checkbox" id="tensionColors"
+                checked></label>
+        <label>Particles: <span id="val-particles">On</span><input type="checkbox" id="particlesEnabled"
+                checked></label>
+
+        <button id="gustBtn">Rajada (R)</button>
+        <button id="cutBtn">Corte Circular (C)</button>
+        <button id="reset">Reset</button>
+    </div>
+
 
     <div id="themes">
         <div class="theme-dot active" id="theme-classic" data-theme="classic" title="Clássico"></div>
@@ -987,6 +1128,9 @@
                 world.scissorMode = true;
                 document.body.classList.add('scissor-mode');
             }
+            if (e.key === 'd' || e.key === 'D') {
+                document.getElementById('controls').classList.toggle('visible');
+            }
             if (e.key === 'r' || e.key === 'R') world.triggerGust();
             if (e.key === 'c' || e.key === 'C') world.cutCircle(mouse.x, mouse.y);
         });
@@ -1053,6 +1197,65 @@
 
         // Restart
         document.getElementById('restartBtn').addEventListener('click', () => buildMesh());
+
+
+        // ===================================
+        // UI CONTROLS
+        // ===================================
+        const controlsList = [
+            { id: 'iterations', display: 'val-iter', path: 'sim.iterations', parse: v => parseInt(v) },
+            { id: 'gravity', display: 'val-grav', path: 'sim.gravity', parse: v => parseFloat(v) },
+            { id: 'friction', display: 'val-fric', path: 'sim.friction', parse: v => parseFloat(v) },
+            { id: 'tearThreshold', display: 'val-tear', path: 'material.tearThreshold', parse: v => parseFloat(v) },
+            { id: 'stiffness', display: 'val-stiff', path: 'material.stiffness', parse: v => parseFloat(v) },
+            { id: 'windForce', display: 'val-wind', path: 'wind.force', parse: v => parseFloat(v) },
+            { id: 'turbulence', display: 'val-turb', path: 'wind.turbulence', parse: v => parseFloat(v) },
+            { id: 'lineWidth', display: 'val-width', path: 'render.lineWidth', parse: v => parseFloat(v) },
+            { id: 'lineOpacity', display: 'val-opacity', path: 'render.lineOpacity', parse: v => parseFloat(v) }
+        ];
+
+        controlsList.forEach(c => {
+            const input = document.getElementById(c.id);
+            const display = document.getElementById(c.display);
+            input.addEventListener('input', e => {
+                const val = c.parse(e.target.value);
+                const keys = c.path.split('.');
+                let obj = Config;
+                for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+                obj[keys[keys.length - 1]] = val;
+                display.textContent = val;
+
+                if (c.id === 'stiffness') {
+                    world.links.forEach(link => {
+                        link.stiffness = link.stiffness > 1 ? val : val * 0.5;
+                    });
+                }
+            });
+        });
+
+        document.getElementById('meshDensity').addEventListener('input', e => {
+            const val = parseInt(e.target.value);
+            document.getElementById('val-density').textContent = val;
+            Config.material.density = val;
+            buildMesh();
+        });
+
+        // Tension colors toggle
+        document.getElementById('tensionColors').addEventListener('change', e => {
+            Config.render.tensionColors = e.target.checked;
+            document.getElementById('val-tension').textContent = e.target.checked ? 'On' : 'Off';
+        });
+
+        // Particles toggle
+        document.getElementById('particlesEnabled').addEventListener('change', e => {
+            Config.render.particlesEnabled = e.target.checked;
+            document.getElementById('val-particles').textContent = e.target.checked ? 'On' : 'Off';
+        });
+
+        // Buttons
+        document.getElementById('gustBtn').addEventListener('click', () => world.triggerGust());
+        document.getElementById('cutBtn').addEventListener('click', () => world.cutCircle(mouse.x, mouse.y));
+        document.getElementById('reset').addEventListener('click', () => buildMesh());
 
         // Clock
         function updateClock() {

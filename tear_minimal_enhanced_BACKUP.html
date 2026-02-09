@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Wire Mesh — Minimal</title>
+    <title>Wire Mesh — Enhanced</title>
     <style>
         * {
             margin: 0;
@@ -22,6 +22,10 @@
         canvas {
             display: block;
             cursor: crosshair;
+        }
+
+        body.scissor-mode canvas {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="20" font-size="20">✂️</text></svg>') 12 12, crosshair;
         }
 
         #ui {
@@ -181,6 +185,99 @@
             pointer-events: none;
             user-select: none;
         }
+
+        /* Material Presets */
+        #presets {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+            pointer-events: all;
+        }
+
+        .preset-btn {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 10px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.35);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .preset-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
+        }
+
+        /* Theme Selector */
+        #themes {
+            position: absolute;
+            top: 80px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: all;
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.15);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .theme-btn.active {
+            border-width: 3px;
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        #theme-classic {
+            background: linear-gradient(135deg, #000 0%, #fff 100%);
+        }
+
+        #theme-blackwhite {
+            background: linear-gradient(135deg, #000 0%, #444 50%, #fff 100%);
+        }
+
+        #theme-neon {
+            background: linear-gradient(135deg, #0a0a0a 0%, #ff00ff 50%, #00ffff 100%);
+        }
+
+        #theme-matrix {
+            background: linear-gradient(135deg, #000 0%, #00ff41 100%);
+        }
+
+        #theme-ocean {
+            background: linear-gradient(135deg, #001a33 0%, #00d4ff 100%);
+        }
+
+        #theme-fire {
+            background: linear-gradient(135deg, #1a0000 0%, #ff4400 50%, #ffaa00 100%);
+        }
     </style>
 </head>
 
@@ -193,18 +290,36 @@
     <div id="clock">00:00:00</div>
 
     <div id="ui">
-        <div>Wire Mesh — Minimal</div>
+        <div>Wire Mesh — Enhanced</div>
         <div>FPS: <span id="fps">60</span></div>
         <div>Torn: <span id="torn">0</span></div>
     </div>
 
     <div id="interactions">
         <h4>INTERAÇÕES</h4>
-        <div><kbd>Click + Drag</kbd> Cortar Linhas</div>
+        <div><kbd>Click + Drag</kbd> Tensionar/Cortar</div>
+        <div><kbd>Shift + Drag</kbd> Modo Tesoura ✂️</div>
         <div><kbd>Double Click</kbd> Corte Vertical</div>
         <div><kbd>R</kbd> Rajada de Vento</div>
         <div><kbd>C</kbd> Corte Circular</div>
         <div><kbd>D</kbd> Controles</div>
+    </div>
+
+    <div id="themes">
+        <div class="theme-btn active" id="theme-classic" data-theme="classic" title="Clássico"></div>
+        <div class="theme-btn" id="theme-blackwhite" data-theme="blackwhite" title="B&W"></div>
+        <div class="theme-btn" id="theme-neon" data-theme="neon" title="Neon"></div>
+        <div class="theme-btn" id="theme-matrix" data-theme="matrix" title="Matrix"></div>
+        <div class="theme-btn" id="theme-ocean" data-theme="ocean" title="Ocean"></div>
+        <div class="theme-btn" id="theme-fire" data-theme="fire" title="Fire"></div>
+    </div>
+
+    <div id="presets">
+        <button class="preset-btn active" data-preset="default">Padrão</button>
+        <button class="preset-btn" data-preset="silk">Seda</button>
+        <button class="preset-btn" data-preset="canvas">Lona</button>
+        <button class="preset-btn" data-preset="metal">Metal</button>
+        <button class="preset-btn" data-preset="jelly">Gelatina</button>
     </div>
 
     <div id="controls">
@@ -235,6 +350,10 @@
                 step="0.1" value="0.8"></label>
         <label>Line Opacity: <span id="val-opacity">0.9</span><input type="range" id="lineOpacity" min="0.3" max="1.0"
                 step="0.05" value="0.9"></label>
+        <label>Tension Colors: <span id="val-tension">On</span><input type="checkbox" id="tensionColors"
+                checked></label>
+        <label>Particles: <span id="val-particles">On</span><input type="checkbox" id="particlesEnabled"
+                checked></label>
 
         <button id="gustBtn">Rajada (R)</button>
         <button id="cutBtn">Corte Circular (C)</button>
@@ -268,13 +387,36 @@
             interactions: {
                 grabRadius: 50,
                 cutCircleRadius: 100,
+                scissorCutRadius: 20,
             },
             render: {
                 lineWidth: 0.8,
                 lineOpacity: 0.9,
                 lineColor: "#ffffff",
                 bgColor: "#000000",
+                tensionColors: true,
+                particlesEnabled: true,
+            },
+            theme: {
+                current: 'classic',
+                colors: {
+                    classic: { bg: '#000000', line: '#ffffff', low: '#00ff88', mid: '#ffaa00', high: '#ff3344' },
+                    blackwhite: { bg: '#000000', line: '#ffffff', low: '#ffffff', mid: '#cccccc', high: '#888888' },
+                    neon: { bg: '#0a0a0a', line: '#00ffff', low: '#00ffff', mid: '#ff00ff', high: '#ff0088' },
+                    matrix: { bg: '#000000', line: '#00ff41', low: '#00ff41', mid: '#88ff44', high: '#ffff00' },
+                    ocean: { bg: '#001a33', line: '#00d4ff', low: '#00d4ff', mid: '#0088ff', high: '#ff6600' },
+                    fire: { bg: '#1a0000', line: '#ffaa00', low: '#ffaa00', mid: '#ff4400', high: '#ff0000' }
+                }
             }
+        };
+
+        // Material Presets
+        const PRESETS = {
+            default: { stiffness: 1.2, tearThreshold: 3.0, friction: 0.98, gravity: 0.2, iterations: 8 },
+            silk: { stiffness: 0.6, tearThreshold: 2.0, friction: 0.99, gravity: 0.15, iterations: 8 },
+            canvas: { stiffness: 1.4, tearThreshold: 4.2, friction: 0.98, gravity: 0.22, iterations: 10 },
+            metal: { stiffness: 1.6, tearThreshold: 4.8, friction: 0.97, gravity: 0.25, iterations: 12 },
+            jelly: { stiffness: 0.3, tearThreshold: 1.5, friction: 0.95, gravity: 0.1, iterations: 6 }
         };
 
         // ===================================
@@ -317,6 +459,37 @@
         })();
 
         // ===================================
+        // PARTICLE SYSTEM (for tear effects)
+        // ===================================
+        class TearParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 1.0;
+                this.maxLife = 0.8 + Math.random() * 0.4;
+                this.size = 1 + Math.random() * 2;
+            }
+
+            update(dt) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2; // gravity
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.life -= dt * 2;
+                return this.life > 0;
+            }
+
+            draw(ctx, theme) {
+                const alpha = Math.max(0, this.life / this.maxLife);
+                ctx.fillStyle = theme.high.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+            }
+        }
+
+        // ===================================
         // PARTICLE & LINK
         // ===================================
         class Particle {
@@ -350,6 +523,7 @@
                 this.dist = Vec2.dist(p1, p2);
                 this.active = true;
                 this.stiffness = stiffness;
+                this.stress = 0;
             }
 
             solve() {
@@ -357,12 +531,12 @@
                 const dx = this.p1.x - this.p2.x;
                 const dy = this.p1.y - this.p2.y;
                 const d = Math.sqrt(dx * dx + dy * dy);
-                const stress = d / this.dist;
+                this.stress = d / this.dist;
 
-                // PROGRESSIVE TEARING: apenas este link quebra quando excede threshold
-                if (stress > Config.material.tearThreshold) {
+                // PROGRESSIVE TEARING
+                if (this.stress > Config.material.tearThreshold) {
                     this.active = false;
-                    return { torn: true, stress };
+                    return { torn: true, stress: this.stress, x: (this.p1.x + this.p2.x) / 2, y: (this.p1.y + this.p2.y) / 2 };
                 }
 
                 // Constraint
@@ -370,7 +544,7 @@
                 const offX = dx * diff, offY = dy * diff;
                 if (!this.p1.pinned) { this.p1.x += offX; this.p1.y += offY; }
                 if (!this.p2.pinned) { this.p2.x -= offX; this.p2.y -= offY; }
-                return { torn: false, stress };
+                return { torn: false, stress: this.stress };
             }
         }
 
@@ -381,10 +555,13 @@
             constructor() {
                 this.particles = [];
                 this.links = [];
+                this.tearParticles = [];
                 this.time = 0;
                 this.grabbed = null;
                 this.gustPulse = 0;
                 this.tornCount = 0;
+                this.scissorMode = false;
+                this.lastScissorPos = null;
             }
 
             addParticle(p) { this.particles.push(p); }
@@ -415,11 +592,20 @@
                 }
 
                 // Grab interaction WITH TENSION
-                if (mouse.down && this.grabbed) {
+                if (mouse.down && this.grabbed && !this.scissorMode) {
                     const dx = mouse.x - this.grabbed.x;
                     const dy = mouse.y - this.grabbed.y;
-                    // Aplicar força gradualmente (não teleportar)
                     this.grabbed.applyForce(dx * 0.15, dy * 0.15);
+                }
+
+                // Scissor mode cutting
+                if (this.scissorMode && mouse.down) {
+                    if (this.lastScissorPos) {
+                        this.scissorCut(this.lastScissorPos.x, this.lastScissorPos.y, mouse.x, mouse.y);
+                    }
+                    this.lastScissorPos = { x: mouse.x, y: mouse.y };
+                } else {
+                    this.lastScissorPos = null;
                 }
 
                 // Constraints & PROGRESSIVE TEARING
@@ -427,9 +613,14 @@
                 for (let iter = 0; iter < Config.sim.iterations; iter++) {
                     for (const link of this.links) {
                         const result = link.solve();
-                        // Cada link quebra INDIVIDUALMENTE quando atinge seu limite
                         if (result.torn && iter === 0) {
                             tornThisFrame++;
+                            // Create particles at tear point
+                            if (Config.render.particlesEnabled) {
+                                for (let i = 0; i < 5; i++) {
+                                    this.tearParticles.push(new TearParticle(result.x, result.y));
+                                }
+                            }
                         }
                     }
                 }
@@ -437,6 +628,9 @@
                 if (tornThisFrame > 0) {
                     this.tornCount += tornThisFrame;
                 }
+
+                // Update tear particles
+                this.tearParticles = this.tearParticles.filter(p => p.update(dt));
             }
 
             triggerGust() {
@@ -452,6 +646,11 @@
                     if (dist < Config.interactions.cutCircleRadius && dist > Config.interactions.cutCircleRadius - 15) {
                         link.active = false;
                         this.tornCount++;
+                        if (Config.render.particlesEnabled) {
+                            for (let i = 0; i < 3; i++) {
+                                this.tearParticles.push(new TearParticle(mx, my));
+                            }
+                        }
                     }
                 }
             }
@@ -460,16 +659,61 @@
                 for (const link of this.links) {
                     if (!link.active) continue;
                     const mx = (link.p1.x + link.p2.x) * 0.5;
+                    const my = (link.p1.y + link.p2.y) * 0.5;
                     if (Math.abs(mx - x) < 12) {
                         link.active = false;
                         this.tornCount++;
+                        if (Config.render.particlesEnabled) {
+                            for (let i = 0; i < 3; i++) {
+                                this.tearParticles.push(new TearParticle(mx, my));
+                            }
+                        }
                     }
                 }
+            }
+
+            scissorCut(x1, y1, x2, y2) {
+                const cutRadius = Config.interactions.scissorCutRadius;
+                for (const link of this.links) {
+                    if (!link.active) continue;
+                    const mx = (link.p1.x + link.p2.x) * 0.5;
+                    const my = (link.p1.y + link.p2.y) * 0.5;
+
+                    // Distance from point to line segment
+                    const dist = this.pointToLineDistance(mx, my, x1, y1, x2, y2);
+                    if (dist < cutRadius) {
+                        link.active = false;
+                        this.tornCount++;
+                        if (Config.render.particlesEnabled) {
+                            for (let i = 0; i < 2; i++) {
+                                this.tearParticles.push(new TearParticle(mx, my));
+                            }
+                        }
+                    }
+                }
+            }
+
+            pointToLineDistance(px, py, x1, y1, x2, y2) {
+                const A = px - x1;
+                const B = py - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                let param = -1;
+                if (lenSq != 0) param = dot / lenSq;
+                let xx, yy;
+                if (param < 0) { xx = x1; yy = y1; }
+                else if (param > 1) { xx = x2; yy = y2; }
+                else { xx = x1 + param * C; yy = y1 + param * D; }
+                const dx = px - xx;
+                const dy = py - yy;
+                return Math.sqrt(dx * dx + dy * dy);
             }
         }
 
         // ===================================
-        // RENDERER (WIREFRAME ONLY - ULTRA FAST)
+        // RENDERER
         // ===================================
         class Renderer {
             constructor(canvas) {
@@ -478,32 +722,84 @@
             }
 
             clear() {
-                this.ctx.fillStyle = Config.render.bgColor;
+                const theme = Config.theme.colors[Config.theme.current];
+                this.ctx.fillStyle = theme.bg;
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             }
 
+            getStressColor(stress, theme) {
+                if (!Config.render.tensionColors) return theme.line;
+
+                if (stress < 1.2) {
+                    // Low stress - base color
+                    return theme.low;
+                } else if (stress < 2.0) {
+                    // Medium stress - interpolate to mid color
+                    const t = (stress - 1.2) / 0.8;
+                    return this.lerpColor(theme.low, theme.mid, t);
+                } else {
+                    // High stress - interpolate to high color
+                    const t = Math.min(1, (stress - 2.0) / 1.0);
+                    return this.lerpColor(theme.mid, theme.high, t);
+                }
+            }
+
+            lerpColor(c1, c2, t) {
+                // Simple color interpolation for hex colors
+                const r1 = parseInt(c1.slice(1, 3), 16);
+                const g1 = parseInt(c1.slice(3, 5), 16);
+                const b1 = parseInt(c1.slice(5, 7), 16);
+                const r2 = parseInt(c2.slice(1, 3), 16);
+                const g2 = parseInt(c2.slice(3, 5), 16);
+                const b2 = parseInt(c2.slice(5, 7), 16);
+                const r = Math.round(r1 + (r2 - r1) * t);
+                const g = Math.round(g1 + (g2 - g1) * t);
+                const b = Math.round(b1 + (b2 - b1) * t);
+                return `rgb(${r},${g},${b})`;
+            }
+
             draw(world) {
-                this.ctx.strokeStyle = Config.render.lineColor;
+                const theme = Config.theme.colors[Config.theme.current];
+
+                // Draw links with tension colors
                 this.ctx.globalAlpha = Config.render.lineOpacity;
                 this.ctx.lineWidth = Config.render.lineWidth;
 
-                // DRAW ONLY ACTIVE LINKS (WIREFRAME)
-                this.ctx.beginPath();
                 for (const link of world.links) {
                     if (!link.active) continue;
+                    const color = this.getStressColor(link.stress, theme);
+                    this.ctx.strokeStyle = color;
+                    this.ctx.beginPath();
                     this.ctx.moveTo(link.p1.x, link.p1.y);
                     this.ctx.lineTo(link.p2.x, link.p2.y);
+                    this.ctx.stroke();
                 }
-                this.ctx.stroke();
+
+                // Draw tear particles
+                for (const particle of world.tearParticles) {
+                    particle.draw(this.ctx, theme);
+                }
 
                 // Grab indicator
-                if (world.grabbed) {
-                    this.ctx.strokeStyle = "rgba(255,100,100,0.6)";
-                    this.ctx.globalAlpha = 1.0;
+                if (world.grabbed && !world.scissorMode) {
+                    this.ctx.strokeStyle = theme.high;
+                    this.ctx.globalAlpha = 0.6;
                     this.ctx.lineWidth = 1.5;
                     this.ctx.beginPath();
                     this.ctx.arc(world.grabbed.x, world.grabbed.y, Config.interactions.grabRadius * 0.4, 0, Math.PI * 2);
                     this.ctx.stroke();
+                }
+
+                // Scissor trail indicator
+                if (world.scissorMode && world.lastScissorPos) {
+                    this.ctx.strokeStyle = theme.high;
+                    this.ctx.globalAlpha = 0.8;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(world.lastScissorPos.x, world.lastScissorPos.y, Config.interactions.scissorCutRadius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
                 }
             }
         }
@@ -528,6 +824,7 @@
             world.particles = [];
             world.links = [];
             world.tornCount = 0;
+            world.tearParticles = [];
             const grid = [];
 
             // Create particles
@@ -595,13 +892,16 @@
         // ===================================
         window.addEventListener("pointerdown", e => {
             mouse.x = e.clientX; mouse.y = e.clientY; mouse.down = true;
-            let minD = 100000, target = null;
-            const grabR = Config.interactions.grabRadius;
-            for (const p of world.particles) {
-                const d = (p.x - mouse.x) ** 2 + (p.y - mouse.y) ** 2;
-                if (d < grabR * grabR && d < minD) { minD = d; target = p; }
+
+            if (!world.scissorMode) {
+                let minD = 100000, target = null;
+                const grabR = Config.interactions.grabRadius;
+                for (const p of world.particles) {
+                    const d = (p.x - mouse.x) ** 2 + (p.y - mouse.y) ** 2;
+                    if (d < grabR * grabR && d < minD) { minD = d; target = p; }
+                }
+                if (target) world.grabbed = target;
             }
-            if (target) world.grabbed = target;
         });
 
         window.addEventListener("pointermove", e => {
@@ -622,12 +922,26 @@
             canvas.height = window.innerHeight;
         });
 
+        let shiftPressed = false;
         window.addEventListener("keydown", e => {
+            if (e.key === 'Shift') {
+                shiftPressed = true;
+                world.scissorMode = true;
+                document.body.classList.add('scissor-mode');
+            }
             if (e.key === 'd' || e.key === 'D') {
                 document.getElementById('controls').classList.toggle('visible');
             }
             if (e.key === 'r' || e.key === 'R') world.triggerGust();
             if (e.key === 'c' || e.key === 'C') world.cutCircle(mouse.x, mouse.y);
+        });
+
+        window.addEventListener("keyup", e => {
+            if (e.key === 'Shift') {
+                shiftPressed = false;
+                world.scissorMode = false;
+                document.body.classList.remove('scissor-mode');
+            }
         });
 
         // ===================================
@@ -672,6 +986,18 @@
             buildMesh();
         });
 
+        // Tension colors toggle
+        document.getElementById('tensionColors').addEventListener('change', e => {
+            Config.render.tensionColors = e.target.checked;
+            document.getElementById('val-tension').textContent = e.target.checked ? 'On' : 'Off';
+        });
+
+        // Particles toggle
+        document.getElementById('particlesEnabled').addEventListener('change', e => {
+            Config.render.particlesEnabled = e.target.checked;
+            document.getElementById('val-particles').textContent = e.target.checked ? 'On' : 'Off';
+        });
+
         document.getElementById('gustBtn').addEventListener('click', () => world.triggerGust());
         document.getElementById('cutBtn').addEventListener('click', () => world.cutCircle(mouse.x, mouse.y));
         document.getElementById('reset').addEventListener('click', () => buildMesh());
@@ -684,7 +1010,6 @@
         // Brasília Clock (UTC-3)
         function updateClock() {
             const now = new Date();
-            // Brasília is UTC-3
             const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
             const hours = String(brasiliaTime.getHours()).padStart(2, '0');
             const minutes = String(brasiliaTime.getMinutes()).padStart(2, '0');
@@ -693,6 +1018,56 @@
         }
         updateClock();
         setInterval(updateClock, 1000);
+
+        // ===================================
+        // THEMES
+        // ===================================
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                Config.theme.current = theme;
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // ===================================
+        // MATERIAL PRESETS
+        // ===================================
+        function applyPreset(presetName) {
+            const preset = PRESETS[presetName];
+            Config.material.stiffness = preset.stiffness;
+            Config.material.tearThreshold = preset.tearThreshold;
+            Config.sim.friction = preset.friction;
+            Config.sim.gravity = preset.gravity;
+            Config.sim.iterations = preset.iterations;
+
+            // Update UI
+            document.getElementById('stiffness').value = preset.stiffness;
+            document.getElementById('val-stiff').textContent = preset.stiffness;
+            document.getElementById('tearThreshold').value = preset.tearThreshold;
+            document.getElementById('val-tear').textContent = preset.tearThreshold;
+            document.getElementById('friction').value = preset.friction;
+            document.getElementById('val-fric').textContent = preset.friction;
+            document.getElementById('gravity').value = preset.gravity;
+            document.getElementById('val-grav').textContent = preset.gravity;
+            document.getElementById('iterations').value = preset.iterations;
+            document.getElementById('val-iter').textContent = preset.iterations;
+
+            // Update link stiffness
+            world.links.forEach(link => {
+                link.stiffness = link.stiffness > 1 ? preset.stiffness : preset.stiffness * 0.5;
+            });
+        }
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                applyPreset(preset);
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
         // START
         init();

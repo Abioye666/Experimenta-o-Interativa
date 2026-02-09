@@ -31,8 +31,8 @@
         /* UI Elements */
         #ui {
             position: absolute;
-            left: 24px;
-            bottom: 32px;
+            left: 100px;
+            bottom: 24px;
             color: rgba(255, 255, 255, 0.5);
             font-size: 10px;
             letter-spacing: 1.2px;
@@ -44,8 +44,8 @@
 
         #clock {
             position: absolute;
-            left: 24px;
-            bottom: 90px;
+            left: 100px;
+            bottom: 65px;
             color: rgba(255, 255, 255, 0.7);
             font-size: 28px;
             font-weight: 300;
@@ -58,8 +58,8 @@
 
         #clock-label {
             position: absolute;
-            left: 24px;
-            bottom: 125px;
+            left: 100px;
+            bottom: 100px;
             color: rgba(255, 255, 255, 0.6);
             font-size: 10px;
             letter-spacing: 1.5px;
@@ -102,6 +102,7 @@
             border-radius: 8px;
             padding: 16px;
             min-width: 220px;
+            z-index: 5;
         }
 
         #shapeSelector h3 {
@@ -236,6 +237,7 @@
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             display: none;
+            z-index: 100;
         }
 
         #controls.visible {
@@ -311,13 +313,14 @@
             margin-right: 6px;
         }
 
-        /* Theme dots */
+        /* Theme dots - vertical at bottom left */
         #themes {
             position: absolute;
-            top: 80px;
+            bottom: 24px;
             left: 24px;
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .theme-dot {

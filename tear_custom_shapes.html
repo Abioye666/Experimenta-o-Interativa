@@ -362,6 +362,127 @@
         #theme-fire {
             background: linear-gradient(135deg, #1a0000 0%, #ff4400 50%, #ffaa00 100%);
         }
+
+        /* ===================================
+           MOBILE RESPONSIVE
+           =================================== */
+        @media (max-width: 768px) {
+
+            /* Aumentar fontes para melhor legibilidade */
+            #ui {
+                font-size: 12px;
+                left: 16px;
+                bottom: 24px;
+            }
+
+            #clock {
+                font-size: 24px;
+                left: 16px;
+                bottom: 70px;
+            }
+
+            #clock-label {
+                font-size: 9px;
+                left: 16px;
+                bottom: 100px;
+            }
+
+            #interactions {
+                font-size: 10px;
+                left: 16px;
+                top: 16px;
+                line-height: 1.6;
+            }
+
+            #interactions h4 {
+                font-size: 9px;
+            }
+
+            #interactions kbd {
+                font-size: 8px;
+                padding: 1px 4px;
+            }
+
+            /* Botões maiores para touch */
+            #restartBtn {
+                padding: 14px 28px;
+                font-size: 11px;
+                top: 16px;
+                right: 16px;
+            }
+
+            /* Theme dots maiores */
+            .theme-dot {
+                width: 40px;
+                height: 40px;
+            }
+
+            #themes {
+                left: 16px;
+                gap: 12px;
+            }
+
+            /* Presets maiores */
+            .preset-btn {
+                padding: 12px 18px;
+                font-size: 10px;
+            }
+
+            #presets {
+                bottom: 16px;
+                right: 16px;
+                flex-wrap: wrap;
+                max-width: 200px;
+                gap: 6px;
+            }
+
+            /* Shape Selector ajustado */
+            #shapeSelector {
+                top: 70px;
+                right: 16px;
+                min-width: 180px;
+                padding: 12px;
+            }
+
+            #shapeSelector h3 {
+                font-size: 9px;
+            }
+
+            .shape-btn {
+                font-size: 28px;
+            }
+
+            .shape-label {
+                font-size: 6px;
+            }
+
+            #imageUpload {
+                font-size: 8px;
+                padding: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            /* Telas muito pequenas */
+            #shapeSelector {
+                min-width: 160px;
+            }
+
+            #presets {
+                display: none;
+                /* Ocultar em telas muito pequenas */
+            }
+
+            #themes {
+                gap: 8px;
+            }
+
+            .theme-dot {
+                width: 36px;
+                height: 36px;
+            }
+        }
     </style>
 </head>
 
@@ -387,6 +508,7 @@
         <div><kbd>R</kbd> Rajada de Vento</div>
         <div><kbd>C</kbd> Corte Circular</div>
         <div><kbd>D</kbd> Controles</div>
+        <div><kbd>Esc</kbd> Reiniciar</div>
     </div>
 
     <div id="controls">
@@ -501,28 +623,77 @@
         // Simplex Noise
         const simplex = new SimplexNoise();
 
-        // Particle for tear effects
+        // Particle for tear effects with Object Pooling
         class TearParticle {
             constructor(x, y) {
+                this.reset(x, y);
+            }
+
+            reset(x, y) {
                 this.x = x; this.y = y;
                 this.vx = (Math.random() - 0.5) * 4;
                 this.vy = (Math.random() - 0.5) * 4;
                 this.life = 1.0;
                 this.maxLife = 0.8 + Math.random() * 0.4;
                 this.size = 1 + Math.random() * 2;
+                this.active = true;
             }
 
             update(dt) {
+                if (!this.active) return false;
                 this.x += this.vx; this.y += this.vy;
                 this.vy += 0.2; this.vx *= 0.98; this.vy *= 0.98;
                 this.life -= dt * 2;
-                return this.life > 0;
+                if (this.life <= 0) {
+                    this.active = false;
+                    return false;
+                }
+                return true;
             }
 
             draw(ctx, theme) {
+                if (!this.active) return;
                 const alpha = Math.max(0, this.life / this.maxLife);
                 ctx.fillStyle = theme.high.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
                 ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+            }
+        }
+
+        // Particle Pool for performance
+        class ParticlePool {
+            constructor(maxSize = 200) {
+                this.pool = [];
+                this.maxSize = maxSize;
+                this.active = [];
+            }
+
+            get(x, y) {
+                if (this.active.length >= this.maxSize) return null;
+                let particle = this.pool.pop();
+                if (!particle) {
+                    particle = new TearParticle(x, y);
+                } else {
+                    particle.reset(x, y);
+                }
+                this.active.push(particle);
+                return particle;
+            }
+
+            update(dt) {
+                this.active = this.active.filter(p => {
+                    const alive = p.update(dt);
+                    if (!alive) this.pool.push(p);
+                    return alive;
+                });
+            }
+
+            draw(ctx, theme) {
+                for (const p of this.active) p.draw(ctx, theme);
+            }
+
+            clear() {
+                this.pool.push(...this.active);
+                this.active = [];
             }
         }
 
@@ -583,7 +754,7 @@
             constructor() {
                 this.particles = [];
                 this.links = [];
-                this.tearParticles = [];
+                this.particlePool = new ParticlePool(200);
                 this.time = 0;
                 this.grabbed = null;
                 this.gustPulse = 0;
@@ -595,7 +766,7 @@
             clear() {
                 this.particles = [];
                 this.links = [];
-                this.tearParticles = [];
+                this.particlePool.clear();
                 this.tornCount = 0;
             }
 
@@ -648,7 +819,7 @@
                             tornThisFrame++;
                             if (Config.render.particlesEnabled) {
                                 for (let i = 0; i < 5; i++) {
-                                    this.tearParticles.push(new TearParticle(result.x, result.y));
+                                    this.particlePool.get(result.x, result.y);
                                 }
                             }
                         }
@@ -656,7 +827,7 @@
                 }
 
                 if (tornThisFrame > 0) this.tornCount += tornThisFrame;
-                this.tearParticles = this.tearParticles.filter(p => p.update(dt));
+                this.particlePool.update(dt);
             }
 
             triggerGust() { this.gustPulse = 2.0; }
@@ -671,7 +842,7 @@
                         link.active = false;
                         this.tornCount++;
                         if (Config.render.particlesEnabled) {
-                            for (let i = 0; i < 3; i++) this.tearParticles.push(new TearParticle(mx, my));
+                            for (let i = 0; i < 3; i++) this.particlePool.get(mx, my);
                         }
                     }
                 }
@@ -687,7 +858,7 @@
                         if (Config.render.particlesEnabled) {
                             for (let i = 0; i < 3; i++) {
                                 const my = (link.p1.y + link.p2.y) * 0.5;
-                                this.tearParticles.push(new TearParticle(mx, my));
+                                this.particlePool.get(mx, my);
                             }
                         }
                     }
@@ -705,7 +876,7 @@
                         link.active = false;
                         this.tornCount++;
                         if (Config.render.particlesEnabled) {
-                            for (let i = 0; i < 2; i++) this.tearParticles.push(new TearParticle(mx, my));
+                            for (let i = 0; i < 2; i++) this.particlePool.get(mx, my);
                         }
                     }
                 }
@@ -771,7 +942,7 @@
                     this.ctx.stroke();
                 }
 
-                for (const particle of world.tearParticles) particle.draw(this.ctx, theme);
+                world.particlePool.draw(this.ctx, theme);
 
                 if (world.grabbed && !world.scissorMode) {
                     this.ctx.strokeStyle = theme.high;
@@ -1137,6 +1308,7 @@
             }
             if (e.key === 'r' || e.key === 'R') world.triggerGust();
             if (e.key === 'c' || e.key === 'C') world.cutCircle(mouse.x, mouse.y);
+            if (e.key === 'Escape') buildMesh();
         });
 
         window.addEventListener("keyup", e => {
